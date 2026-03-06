@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { KioskDispatchPlan, KioskStatus } from "../types";
+import { KioskDispatchPlan } from "../types";
 import { fetchKioskDispatchPlans } from "../providers/fetchProvider";
 
 export function useInboundOutboundKiosk() {
@@ -19,8 +19,8 @@ export function useInboundOutboundKiosk() {
         try {
             const data = await fetchKioskDispatchPlans();
             setPlans(data);
-        } catch (err: any) {
-            setError(err?.message || "Something went wrong while fetching data");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Something went wrong while fetching data");
         } finally {
             setLoading(false);
         }

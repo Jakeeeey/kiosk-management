@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KioskDispatchPlan } from "../types";
 import { format } from "date-fns";
-import { Calendar, Truck, User, Fingerprint, CheckCircle2, ArrowRight } from "lucide-react";
+import { Calendar, User, Fingerprint, CheckCircle2, ArrowRight } from "lucide-react";
 import { DispatchSummaryModal } from "./DispatchSummaryModal";
 import { ArrivalDetailsModal } from "./ArrivalDetailsModal";
 
@@ -41,6 +40,10 @@ export function DispatchModal({ plan, open, onOpenChange, onSuccess }: DispatchM
     // Overrides for substitution
     const [driverOverride, setDriverOverride] = React.useState<{ name: string; rfid: string; id: number } | null>(null);
     const [helperOverrides, setHelperOverrides] = React.useState<{ name: string; rfid: string; id: number }[]>([]);
+
+    const statusLower = (plan?.status || "").trim().toLowerCase();
+    const isDispatch = statusLower === "for dispatch";
+    const isInbound = statusLower === "for inbound";
 
     const inputRef = React.useRef<HTMLInputElement>(null);
     const processingRef = React.useRef(false);
@@ -177,7 +180,7 @@ export function DispatchModal({ plan, open, onOpenChange, onSuccess }: DispatchM
         } finally {
             processingRef.current = false;
         }
-    }, [plan, handleUnknownRfid]);
+    }, [plan, handleUnknownRfid, driverChecked, driverOverride?.rfid, helperOverrides, isDispatch, verifiedHelperRfids]);
 
     // Debounce effect for scanning
     React.useEffect(() => {
@@ -238,9 +241,6 @@ export function DispatchModal({ plan, open, onOpenChange, onSuccess }: DispatchM
         setSubUser(null);
     };
 
-    const statusLower = (plan?.status || "").trim().toLowerCase();
-    const isDispatch = statusLower === "for dispatch";
-    const isInbound = statusLower === "for inbound";
 
     const currentDriverName = driverOverride?.name || plan?.driver_name || "No Driver";
 

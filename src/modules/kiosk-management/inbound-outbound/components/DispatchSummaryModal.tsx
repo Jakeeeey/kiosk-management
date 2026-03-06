@@ -28,6 +28,25 @@ interface CustomerSummary {
     invoices: CustomerInvoice[];
 }
 
+interface PostDispatchInvoice {
+    invoice_id: number;
+}
+
+interface SalesInvoice {
+    customer_code: string;
+    invoice_no: string;
+    net_amount: string | number;
+}
+
+interface CustomerData {
+    customer_code: string;
+    store_name?: string;
+    customer_name?: string;
+    brgy?: string;
+    city?: string;
+    province?: string;
+}
+
 export function DispatchSummaryModal({
     open,
     onOpenChange,
@@ -51,7 +70,7 @@ export function DispatchSummaryModal({
             if (!invoicesRes.ok) throw new Error("Failed to fetch dispatch invoices");
             const invoicesData = await invoicesRes.json();
 
-            const invoiceIds = invoicesData.map((inv: any) => inv.invoice_id);
+            const invoiceIds = invoicesData.map((inv: PostDispatchInvoice) => inv.invoice_id);
 
             if (invoiceIds.length === 0) {
                 setSummaries([]);
@@ -69,7 +88,7 @@ export function DispatchSummaryModal({
             const salesInvoicesData = await salesInvoicesRes.json();
 
             // 3. Group by customer code, storing the invoice objects
-            const invoicesByCustomer = salesInvoicesData.reduce((acc: Record<string, CustomerInvoice[]>, si: any) => {
+            const invoicesByCustomer = salesInvoicesData.reduce((acc: Record<string, CustomerInvoice[]>, si: SalesInvoice) => {
                 if (si.customer_code && si.invoice_no) {
                     if (!acc[si.customer_code]) acc[si.customer_code] = [];
                     acc[si.customer_code].push({
@@ -91,10 +110,10 @@ export function DispatchSummaryModal({
             const customersData = await customersRes.json();
 
             const customerMap: Record<string, { name: string, address: string }> = {};
-            customersData.forEach((c: any) => {
+            customersData.forEach((c: CustomerData) => {
                 const addressParts = [c.brgy, c.city, c.province].filter(Boolean);
                 customerMap[c.customer_code] = {
-                    name: c.store_name || c.customer_name,
+                    name: (c.store_name || c.customer_name || c.customer_code) as string,
                     address: addressParts.join(', ') || 'Address not available'
                 };
             });
@@ -107,9 +126,10 @@ export function DispatchSummaryModal({
             }));
 
             setSummaries(finalSummaries);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error fetching summary data:", err);
-            setError(err.message || "An unexpected error occurred");
+            const message = err instanceof Error ? err.message : "An unexpected error occurred";
+            setError(message);
             toast.error("Failed to load dispatch summary");
         } finally {
             setLoading(false);

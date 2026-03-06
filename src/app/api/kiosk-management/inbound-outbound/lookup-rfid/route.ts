@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
             rfid: user.rf_id
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error looking up RFID:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

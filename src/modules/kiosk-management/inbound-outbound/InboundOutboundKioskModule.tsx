@@ -4,8 +4,7 @@ import * as React from "react";
 import { useInboundOutboundKiosk } from "./hooks/useInboundOutboundKiosk";
 import { KioskSearch } from "./components/KioskSearch";
 import { KioskList } from "./components/KioskList";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCcw, LayoutPanelLeft } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function InboundOutboundKioskModule() {

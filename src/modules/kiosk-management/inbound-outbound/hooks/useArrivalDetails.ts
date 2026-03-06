@@ -9,6 +9,22 @@ import {
     fetchCustomersByCodes
 } from "../providers/fetchProvider";
 
+interface PostDispatchInvoice {
+    invoice_id: number;
+}
+
+interface SalesInvoice {
+    customer_code: string;
+    invoice_no: string;
+    net_amount: string | number;
+}
+
+interface CustomerData {
+    customer_code: string;
+    store_name?: string;
+    customer_name?: string;
+}
+
 interface CustomerInvoice {
     no: string;
     amount: number;
@@ -36,7 +52,7 @@ export function useArrivalDetails(plan: KioskDispatchPlan | null, open: boolean)
         try {
             // 1. Fetch invoices for this plan
             const invoicesData = await fetchDispatchInvoices(plan.id);
-            const invoiceIds = invoicesData.map((inv: any) => inv.invoice_id);
+            const invoiceIds = invoicesData.map((inv: PostDispatchInvoice) => inv.invoice_id);
 
             if (invoiceIds.length === 0) {
                 setCustomers([]);
@@ -49,14 +65,14 @@ export function useArrivalDetails(plan: KioskDispatchPlan | null, open: boolean)
 
             // 3. Get unique customer codes
             const customerCodes = Array.from(
-                new Set(salesInvoicesData.map((si: any) => si.customer_code).filter(Boolean))
+                new Set(salesInvoicesData.map((si: SalesInvoice) => si.customer_code).filter(Boolean))
             ) as string[];
 
             // 4. Fetch customer details
             const customersData = await fetchCustomersByCodes(customerCodes);
 
             // 5. Group invoice numbers and amounts by customer code
-            const invoicesByCustomer = salesInvoicesData.reduce((acc: Record<string, CustomerInvoice[]>, si: any) => {
+            const invoicesByCustomer = salesInvoicesData.reduce((acc: Record<string, CustomerInvoice[]>, si: SalesInvoice) => {
                 if (si.customer_code && si.invoice_no) {
                     if (!acc[si.customer_code]) acc[si.customer_code] = [];
                     acc[si.customer_code].push({
@@ -67,16 +83,17 @@ export function useArrivalDetails(plan: KioskDispatchPlan | null, open: boolean)
                 return acc;
             }, {});
 
-            const finalCustomers: CustomerSummary[] = customersData.map((c: any) => ({
+            const finalCustomers: CustomerSummary[] = customersData.map((c: CustomerData) => ({
                 customer_code: c.customer_code,
                 customer_name: c.store_name || c.customer_name || c.customer_code,
                 invoices: invoicesByCustomer[c.customer_code] || []
             }));
 
             setCustomers(finalCustomers);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error fetching arrival details data:", err);
-            setError(err.message || "An unexpected error occurred");
+            const message = err instanceof Error ? err.message : "An unexpected error occurred";
+            setError(message);
             toast.error("Failed to load arrival details");
         } finally {
             setLoading(false);

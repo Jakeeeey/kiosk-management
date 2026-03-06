@@ -1,5 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
+interface DirectusUser {
+    user_id: number;
+    user_fname: string;
+    user_lname: string;
+    rf_id?: string | null;
+}
+
+interface DirectusVehicle {
+    vehicle_id: number;
+    vehicle_plate: string;
+}
+
+interface DirectusStaff {
+    id: number;
+    post_dispatch_plan_id: number;
+    user_id: number;
+    role: string;
+    is_present?: number | boolean;
+}
+
+interface DirectusPlan {
+    id: number;
+    doc_no: string;
+    date_encoded: string;
+    estimated_time_of_dispatch?: string;
+    estimated_time_of_arrival?: string;
+    vehicle_id: number;
+    status: string;
+}
+
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const AUTH_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
 
@@ -41,12 +71,12 @@ export async function GET(req: NextRequest) {
         });
         const vehicles = await vehicleRes.json();
 
-        const userMap = new Map<number, any>(users.data.map((u: any) => [u.user_id, u]));
-        const vehicleMap = new Map<number, any>(vehicles.data.map((v: any) => [v.vehicle_id, v]));
+        const userMap = new Map<number, DirectusUser>(users.data.map((u: DirectusUser) => [u.user_id, u]));
+        const vehicleMap = new Map<number, DirectusVehicle>(vehicles.data.map((v: DirectusVehicle) => [v.vehicle_id, v]));
 
         // staff map: post_dispatch_plan_id -> Array of staff records
-        const planStaffMap = new Map<number, any[]>();
-        staff.data.forEach((s: any) => {
+        const planStaffMap = new Map<number, DirectusStaff[]>();
+        staff.data.forEach((s: DirectusStaff) => {
             if (!s.post_dispatch_plan_id) return;
             if (!planStaffMap.has(s.post_dispatch_plan_id)) {
                 planStaffMap.set(s.post_dispatch_plan_id, []);
@@ -55,7 +85,7 @@ export async function GET(req: NextRequest) {
         });
 
         // Join data to create enriched kiosk plans
-        const enrichedPlans = plans.data.map((p: any) => {
+        const enrichedPlans = plans.data.map((p: DirectusPlan) => {
             const planStatus = (p.status || "").trim().toLowerCase();
             const isInbound = planStatus === "for inbound";
 
@@ -64,18 +94,18 @@ export async function GET(req: NextRequest) {
 
             // For Inbound, ONLY show staff who are physically present
             if (isInbound) {
-                staffRecords = staffRecords.filter((s: any) => s.is_present === 1 || s.is_present === true);
+                staffRecords = staffRecords.filter((s: DirectusStaff) => s.is_present === 1 || s.is_present === true);
             }
 
             const vehicle = vehicleMap.get(p.vehicle_id);
-            const formatUser = (user: any) => user ? `${user.user_fname} ${user.user_lname}` : null;
+            const formatUser = (user: DirectusUser | undefined | null) => user ? `${user.user_fname} ${user.user_lname}` : null;
 
             // Map staff records to user data
-            const driverRecord = staffRecords.find((s: any) => s.role === "Driver");
-            const helperRecords = staffRecords.filter((s: any) => s.role === "Helper");
+            const driverRecord = staffRecords.find((s: DirectusStaff) => s.role === "Driver");
+            const helperRecords = staffRecords.filter((s: DirectusStaff) => s.role === "Helper");
 
             const driverUser = driverRecord ? userMap.get(driverRecord.user_id) : null;
-            const helperUsers = helperRecords.map((h: any) => userMap.get(h.user_id)).filter(Boolean);
+            const helperUsers = helperRecords.map((h: DirectusStaff) => userMap.get(h.user_id)).filter((u): u is DirectusUser => !!u);
 
             return {
                 id: p.id,
@@ -91,7 +121,7 @@ export async function GET(req: NextRequest) {
                 helper_name: formatUser(helperUsers[0]) || null,
                 helper_rfid: helperUsers[0]?.rf_id || null,
                 // Multi-Helper Support
-                helpers: helperUsers.map((h: any) => ({
+                helpers: helperUsers.map((h: DirectusUser) => ({
                     name: formatUser(h),
                     rf_id: h.rf_id || null
                 })),
@@ -101,7 +131,7 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json({ data: enrichedPlans });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("API Error in inbound-outbound:", error);
         return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
     }
@@ -136,7 +166,7 @@ export async function POST(req: NextRequest) {
 
 
         return NextResponse.json({ error: "Not Found" }, { status: 404 });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("POST Error in inbound-outbound:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
@@ -186,11 +216,11 @@ export async function PATCH(req: NextRequest) {
         });
         const users = (await userRes.json()).data || [];
         const rfidToUserId = new Map<string, number>(
-            users.map((u: any) => [u.rf_id?.toLowerCase(), u.user_id]).filter((x: any) => x[0])
+            users.map((u: DirectusUser) => [u.rf_id?.toLowerCase(), u.user_id] as [string, number]).filter((x: [string | undefined, number]) => x[0])
         );
 
         // --- Process Driver ---
-        const existingDriver = existingStaff.find((s: any) => s.role === "Driver");
+        const existingDriver = existingStaff.find((s: DirectusStaff) => s.role === "Driver");
         if (driver_id && (!existingDriver || existingDriver.user_id !== driver_id)) {
             // Substitution: mark old as not present, create new
             if (existingDriver) {
@@ -218,7 +248,7 @@ export async function PATCH(req: NextRequest) {
         const verifiedUserIds = new Set(helperRfids.map((r: string) => rfidToUserId.get(r)).filter(Boolean));
 
         // 1. Mark existing helpers as present/absent
-        const existingHelpers = existingStaff.filter((s: any) => s.role === "Helper");
+        const existingHelpers = existingStaff.filter((s: DirectusStaff) => s.role === "Helper");
         for (const h of existingHelpers) {
             const isVerified = verifiedUserIds.has(h.user_id);
             await fetch(`${DIRECTUS_URL}/items/post_dispatch_plan_staff/${h.id}`, {
@@ -250,7 +280,7 @@ export async function PATCH(req: NextRequest) {
                 });
                 const invoicesData = await invoicesRes.json();
                 const invoices = invoicesData.data || [];
-                const invoiceIds = invoices.map((inv: any) => inv.invoice_id);
+                const invoiceIds = invoices.map((inv: { invoice_id: number }) => inv.invoice_id);
 
                 console.log(`[KIOSK_PATCH] Found ${invoiceIds.length} invoices:`, invoiceIds);
 
@@ -261,7 +291,7 @@ export async function PATCH(req: NextRequest) {
                     });
                     const siData = await salesInvoicesRes.json();
                     const salesInvoices = siData.data || [];
-                    const orderNos = Array.from(new Set(salesInvoices.map((si: any) => si.order_id).filter(Boolean)));
+                    const orderNos = Array.from(new Set(salesInvoices.map((si: { order_id: string }) => si.order_id).filter(Boolean)));
 
                     console.log(`[KIOSK_PATCH] Found ${orderNos.length} unique orders to update:`, orderNos);
 
@@ -311,7 +341,7 @@ export async function PATCH(req: NextRequest) {
                 const invoices = invoicesData.data || [];
 
                 if (invoices.length > 0) {
-                    const invoiceIds = invoices.map((inv: any) => inv.invoice_id);
+                    const invoiceIds = invoices.map((inv: { invoice_id: number }) => inv.invoice_id);
 
                     // 2. Get sales invoices to map to customer_code and order_id
                     const salesInvoicesRes = await fetch(`${DIRECTUS_URL}/items/sales_invoice?limit=-1&filter[invoice_id][_in]=${invoiceIds.join(',')}`, {
@@ -321,10 +351,10 @@ export async function PATCH(req: NextRequest) {
                     const salesInvoices = siData.data || [];
 
                     // Map invoice_id -> post_dispatch_invoices.id
-                    const postDispatchMap = new Map();
-                    invoices.forEach((inv: any) => postDispatchMap.set(inv.invoice_id, inv.id));
+                    const postDispatchMap = new Map<number, number>();
+                    invoices.forEach((inv: { invoice_id: number; id: number }) => postDispatchMap.set(inv.invoice_id, inv.id));
 
-                    const updates: any[] = [];
+                    const updates: { type: "pdi" | "so"; id?: number; order_no?: string; data: { status?: string; order_status?: string } }[] = [];
                     for (const si of salesInvoices) {
                         const customerCode = si.customer_code;
                         const orderId = si.order_id;
@@ -369,8 +399,8 @@ export async function PATCH(req: NextRequest) {
                     const soStatusGroups: Record<string, string[]> = { "Delivered": [], "Not Fulfilled": [] };
                     updates.filter(u => u.type === 'so').forEach(so => {
                         const st = so.data.order_status;
-                        if (!soStatusGroups[st]) soStatusGroups[st] = [];
-                        soStatusGroups[st].push(so.order_no);
+                        if (st && !soStatusGroups[st]) soStatusGroups[st] = [];
+                        if (st && so.order_no) soStatusGroups[st].push(so.order_no);
                     });
 
                     for (const [st, ordNos] of Object.entries(soStatusGroups)) {
@@ -387,14 +417,14 @@ export async function PATCH(req: NextRequest) {
                     }
                     console.log(`[KIOSK_PATCH] Arrival updates successful.`);
                 }
-            } catch (arrivalError) {
+            } catch (arrivalError: unknown) {
                 console.error("[KIOSK_PATCH] Critical error during arrival update chain:", arrivalError);
             }
         }
 
         return NextResponse.json({ success: true });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("PATCH Error in inbound-outbound:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
