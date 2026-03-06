@@ -88,7 +88,7 @@ export default function Page() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-sm text-muted-foreground">
-                        We can tailor the services to your VOS modules (FM/SCM/HR/etc.).
+                        We can tailor the services to your VOS modules (FM/kiosk-management/HR/etc.).
                     </div>
                     <div className="flex gap-3">
                         <Button asChild variant="outline" className="cursor-pointer">
