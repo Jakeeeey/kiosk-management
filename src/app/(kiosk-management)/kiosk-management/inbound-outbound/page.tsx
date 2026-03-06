@@ -1,7 +1,7 @@
-import ComingSoon from "../_components/ComingSoon";
+import { InboundOutboundKioskModule } from "@/modules/kiosk-management/inbound-outbound";
 
 export default function InboundOutboundPage() {
     return (
-        <ComingSoon />
+        <InboundOutboundKioskModule />
     );
 }
