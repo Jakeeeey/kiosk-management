@@ -120,7 +120,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Meal & cafeteria access",
         icon: UtensilsCrossed,
         bgClass: "bg-gradient-to-br from-amber-400 to-amber-600",
-        href: "#",
+        href: "/kiosk-management/cafeteria-attendance",
         badge: "Facility",
     },
     {
@@ -128,7 +128,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Production floor tracking",
         icon: Factory,
         bgClass: "bg-gradient-to-br from-cyan-500 to-cyan-700",
-        href: "#",
+        href: "/kiosk-management/production-attendance",
         badge: "Operations",
     },
     {
@@ -136,7 +136,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Vital site attendance",
         icon: Building,
         bgClass: "bg-gradient-to-br from-pink-500 to-pink-700",
-        href: "#",
+        href: "/kiosk-management/vital-attendance",
         badge: "HR",
     },
 ];

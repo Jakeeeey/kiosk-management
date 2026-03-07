@@ -1,7 +1,9 @@
-import ComingSoon from "../_components/ComingSoon";
+import { VitalAttendanceModule } from "@/modules/kiosk-management/vital-attendance/VitalAttendanceModule";
 
 export default function VitalAttendancePage() {
+    const url = process.env.VITAL_ATTENDANCE_URL || process.env.VITAL_ATTENDANCE_URL_VPN;
+
     return (
-        <ComingSoon />
+        <VitalAttendanceModule url={url} />
     );
 }
