@@ -27,11 +27,24 @@ import {
     Activity,
     ScanLine,
     Loader2,
+    CirclePower,
     type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 /* ─────────────────────────────────────────────
  * CVA — Kiosk Card Variants (Base only)
@@ -273,8 +286,78 @@ function RfidAuthDialog({
  * Page Component
  * ───────────────────────────────────────────── */
 export default function KioskManagementPage() {
+    const router = useRouter();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleGlobalLogout = async () => {
+        try {
+            setIsLoggingOut(true);
+            await fetch("/api/auth/kiosk-logout", { method: "POST" });
+            router.push("/");
+            toast.success("Logged out successfully");
+        } catch {
+            toast.error("Failed to log out properly.");
+            setIsLoggingOut(false);
+        }
+    };
+
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 p-8 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+        <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 p-8 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 relative">
+
+            {/* Global Logout Button */}
+            <div className="absolute top-8 right-8 z-50">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-24 w-24 rounded-full bg-white/50 shadow-sm hover:bg-red-50 hover:text-red-600 text-red-500 dark:bg-black/50 dark:hover:bg-red-950 dark:hover:text-red-400 transition-all border border-border/50 group"
+                        >
+                            <CirclePower className="size-16 transition-transform group-hover:scale-110" strokeWidth={3} />
+                            <span className="sr-only">Log Out</span>
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="sm:max-w-md bg-background/95 backdrop-blur-3xl shadow-2xl border-red-500/20">
+                        {/* Top decorative red bar */}
+                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-500 to-rose-600" />
+
+                        <div className="flex flex-col items-center gap-4 text-center pt-4">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 ring-8 ring-red-50 dark:ring-red-950/50">
+                                <CirclePower className="h-8 w-8 text-red-600 dark:text-red-500" strokeWidth={2.5} />
+                            </div>
+
+                            <AlertDialogHeader className="w-full">
+                                <AlertDialogTitle className="text-2xl font-bold tracking-tight text-foreground">
+                                    System Logout
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-base mt-2 text-muted-foreground">
+                                    Are you sure you want to log out of the kiosk terminal? You will need an authorized RFID badge to regain access.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                        </div>
+
+                        <AlertDialogFooter className="mt-6 flex gap-3 sm:space-x-0">
+                            <AlertDialogCancel
+                                disabled={isLoggingOut}
+                                className="flex-1 rounded-xl h-12 font-semibold text-muted-foreground hover:bg-muted"
+                            >
+                                Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    void handleGlobalLogout();
+                                }}
+                                disabled={isLoggingOut}
+                                className="flex-1 rounded-xl h-12 bg-red-600 hover:bg-red-700 text-white font-bold shadow-sm transition-colors"
+                            >
+                                {isLoggingOut ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Confirm Logout"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+
             <div className="flex w-full max-w-6xl flex-col items-center gap-10">
 
                 {/* Header */}
