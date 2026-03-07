@@ -26,7 +26,7 @@ export function InboundOutboundKioskModule() {
         try {
             await fetch("/api/kiosk-management/inbound-outbound/logout", { method: "POST" });
             router.push("/kiosk-management");
-        } catch (error) {
+        } catch {
             toast.error("Failed to securely log out. Please try again.");
         }
     };
