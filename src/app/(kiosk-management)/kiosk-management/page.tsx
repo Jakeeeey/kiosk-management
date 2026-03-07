@@ -96,7 +96,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Employee time tracking",
         icon: Users,
         bgClass: "bg-gradient-to-br from-emerald-500 to-emerald-700",
-        href: "#",
+        href: "/kiosk-management/men2-attendance",
         badge: "HR",
     },
     {
@@ -104,7 +104,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Vertex site attendance",
         icon: Building2,
         bgClass: "bg-gradient-to-br from-violet-500 to-violet-700",
-        href: "#",
+        href: "/kiosk-management/vertex-attendance",
         badge: "HR",
     },
     {
@@ -112,7 +112,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Hanvin site attendance",
         icon: History,
         bgClass: "bg-gradient-to-br from-orange-400 to-orange-600",
-        href: "#",
+        href: "/kiosk-management/hanvin-attendance",
         badge: "HR",
     },
     {

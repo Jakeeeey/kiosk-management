@@ -53,7 +53,7 @@ export function InboundOutboundKioskModule() {
     }
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 pb-20">
+        <div className="max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 pb-20 px-4 md:px-8 lg:px-12">
             {/* Premium Header Container */}
             <div className="relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
