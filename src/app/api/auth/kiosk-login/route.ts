@@ -39,11 +39,18 @@ export async function POST(request: NextRequest) {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (TOKEN) {
             headers["Authorization"] = `Bearer ${TOKEN}`;
+        } else {
+            console.warn("[Auth] DIRECTUS_STATIC_TOKEN is missing. This may lead to empty results if the collection is not public.");
         }
 
-        console.log("[Auth] Fetching:", requestUrl);
+        console.log("[Auth] Fetching user by RFID:", rfidCode);
 
-        const userRes = await fetch(requestUrl, { headers });
+        // Force 'no-store' so we always get fresh data from Directus instead of Next.js cache
+        const userRes = await fetch(requestUrl, {
+            headers,
+            cache: "no-store",
+            next: { revalidate: 0 } // Extra safety for Next.js App Router caching
+        });
         const rawText = await userRes.text();
 
         if (!userRes.ok) {
@@ -61,6 +68,7 @@ export async function POST(request: NextRequest) {
         const user = userData.data?.[0];
 
         if (!user) {
+            console.warn(`[Auth] RFID not found in database: "${rfidCode}"`);
             return NextResponse.json(
                 { success: false, message: "RFID card not recognized." },
                 { status: 401 }
@@ -71,6 +79,7 @@ export async function POST(request: NextRequest) {
         const isAuthorized = AUTHORIZED_DEPARTMENT_IDS.includes(Number(user.user_department));
 
         if (!isAuthorized) {
+            console.warn(`[Auth] Authorized check failed for user ${user.user_id} in department ${user.user_department}`);
             return NextResponse.json(
                 { success: false, message: "Your department is not authorized for Kiosk access." },
                 { status: 403 }
@@ -83,13 +92,21 @@ export async function POST(request: NextRequest) {
         // Simple token format (can be a JWT in real-world scenarios)
         const tokenPayload = btoa(JSON.stringify({ userId: user.user_id, dept: user.user_department, timestamp: Date.now() }));
 
+        // Detect if we are on HTTP or HTTPS to handle the 'secure' flag correctly
+        // Next.js normally defaults to process.env.NODE_ENV === "production"
+        // But in local network deployments (like http://msi-4:3008), 'secure: true' will block cookies over HTTP.
+        const isProduction = process.env.NODE_ENV === "production";
+
         cookieStore.set("kiosk_token", tokenPayload, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            // If it's production but NOT using HTTPS, we must set secure to false or the cookie won't persist.
+            secure: isProduction ? (request.nextUrl.protocol === "https:") : false,
             sameSite: "lax",
             maxAge: 60 * 60 * 24 * 365, // 365 days
             path: "/",
         });
+
+        console.log(`[Auth] User ${user.user_id} (${user.user_fname}) logged in successfully.`);
 
         return NextResponse.json({
             success: true,
