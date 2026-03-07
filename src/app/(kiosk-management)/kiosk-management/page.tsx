@@ -160,11 +160,17 @@ function RfidAuthDialog({
         setLoading(true);
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
             const res = await fetch("/api/kiosk-management/validate-rfid", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ rfidCode: code.trim() }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             const data = await res.json() as { authorized: boolean; message?: string };
 
@@ -181,7 +187,9 @@ function RfidAuthDialog({
                 setTimeout(() => inputRef.current?.focus(), 100);
             }
         } catch {
-            toast.error("Connection error. Please try again.");
+            toast.error("Server is down please contact Administrator", {
+                duration: 5000,
+            });
             setRfidValue("");
             setLoading(false);
         }
