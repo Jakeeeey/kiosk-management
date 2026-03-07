@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 const TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
@@ -74,6 +75,18 @@ export async function POST(request: NextRequest) {
         const isAuthorized = AUTHORIZED_DEPARTMENT_IDS.includes(Number(user.user_department));
 
         console.log("[RFID] user_department:", user.user_department, "| authorized:", isAuthorized);
+
+        // If authorized, set a cookie for route protection
+        if (isAuthorized) {
+            const cookieStore = await cookies();
+            cookieStore.set("inbound_outbound_token", "true", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 60 * 30, // 30 minutes
+                path: "/",
+            });
+        }
 
         return NextResponse.json({ authorized: isAuthorized }, { status: 200 });
     } catch (err) {

@@ -4,8 +4,10 @@ import * as React from "react";
 import { useInboundOutboundKiosk } from "./hooks/useInboundOutboundKiosk";
 import { KioskSearch } from "./components/KioskSearch";
 import { KioskList } from "./components/KioskList";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function InboundOutboundKioskModule() {
     const {
@@ -18,6 +20,16 @@ export function InboundOutboundKioskModule() {
         setStatusFilter,
         reload,
     } = useInboundOutboundKiosk();
+    const router = useRouter();
+
+    const handleBack = async () => {
+        try {
+            await fetch("/api/kiosk-management/inbound-outbound/logout", { method: "POST" });
+            router.push("/kiosk-management");
+        } catch {
+            toast.error("Failed to securely log out. Please try again.");
+        }
+    };
 
     if (error) {
         return (
@@ -45,16 +57,26 @@ export function InboundOutboundKioskModule() {
             {/* Premium Header Container */}
             <div className="relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            {loading && <RefreshCcw className="h-4 w-4 animate-spin text-muted-foreground/60" />}
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-12 w-12 rounded-2xl border-border/60 shadow-sm hover:shadow-md hover:bg-muted transition-all"
+                            onClick={handleBack}
+                        >
+                            <ArrowLeft className="h-6 w-6 text-foreground" />
+                        </Button>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                {loading && <RefreshCcw className="h-4 w-4 animate-spin text-muted-foreground/60" />}
+                            </div>
+                            <h1 className="text-3xl font-bold text-foreground">
+                                Kiosk Dispatch
+                            </h1>
+                            <p className="text-sm text-muted-foreground">
+                                Real-time monitoring and management of inbound & outbound dispatch flows.
+                            </p>
                         </div>
-                        <h1 className="text-3xl font-bold text-foreground">
-                            Kiosk Dispatch
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Real-time monitoring and management of inbound & outbound dispatch flows with high-precision tracking.
-                        </p>
                     </div>
 
                     <div className="flex flex-col items-center justify-center bg-card border border-border/60 shadow-sm rounded-xl px-4 py-4 w-24 transition-all hover:shadow-md hover:border-primary/30 group">
