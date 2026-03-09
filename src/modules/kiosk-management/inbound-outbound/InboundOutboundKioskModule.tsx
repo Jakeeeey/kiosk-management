@@ -4,7 +4,7 @@ import * as React from "react";
 import { useInboundOutboundKiosk } from "./hooks/useInboundOutboundKiosk";
 import { KioskSearch } from "./components/KioskSearch";
 import { KioskList } from "./components/KioskList";
-import { RefreshCcw, ArrowLeft } from "lucide-react";
+import { RefreshCcw, ArrowLeft, WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,6 +21,18 @@ export function InboundOutboundKioskModule() {
         reload,
     } = useInboundOutboundKiosk();
     const router = useRouter();
+    const [isServerDown, setIsServerDown] = React.useState(false);
+    const [countdown, setCountdown] = React.useState(10);
+
+    // Sync isServerDown with error from hook
+    React.useEffect(() => {
+        if (error) {
+            setIsServerDown(true);
+        } else {
+            setIsServerDown(false);
+            setCountdown(10);
+        }
+    }, [error]);
 
     const handleBack = async () => {
         try {
@@ -31,29 +43,77 @@ export function InboundOutboundKioskModule() {
         }
     };
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="h-16 w-16 rounded-3xl bg-destructive/10 flex items-center justify-center border border-destructive/20 shadow-sm">
-                    <RefreshCcw className="h-8 w-8 text-destructive animate-pulse" />
-                </div>
-                <div className="space-y-2">
-                    <h3 className="text-xl font-black tracking-tight text-foreground">Sync Error</h3>
-                    <p className="text-muted-foreground max-w-xs font-medium">{error}</p>
-                </div>
-                <Button
-                    variant="outline"
-                    onClick={() => void reload()}
-                    className="rounded-xl h-12 px-8 font-bold border-border/60 hover:bg-muted transition-all"
-                >
-                    Retry Connection
-                </Button>
-            </div>
-        );
-    }
+    const handleRefresh = () => {
+        window.location.reload();
+    };
+
+    // Auto-refresh logic for Server Down state
+    React.useEffect(() => {
+        if (!isServerDown) return;
+
+        const interval = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    void handleRefresh();
+                    return 10;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isServerDown]);
 
     return (
         <div className="max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 pb-20 px-4 md:px-8 lg:px-12">
+            {/* Server Down Modal */}
+            {isServerDown && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-8 animate-in zoom-in-95 duration-300">
+                    <div className="max-w-md w-full p-8 rounded-[2.5rem] bg-card border border-destructive/20 shadow-[0_0_50px_-12px_rgba(220,38,38,0.3)] text-center space-y-8 relative overflow-hidden group">
+                        {/* Background Pulse */}
+                        <div className="absolute inset-0 bg-destructive/5 animate-pulse" />
+
+                        <div className="relative space-y-6">
+                            <div className="flex justify-center">
+                                <div className="h-24 w-24 rounded-3xl bg-destructive/10 border border-destructive/20 flex items-center justify-center relative overflow-hidden">
+                                    <WifiOff className="h-12 w-12 text-destructive" />
+                                    <div className="absolute inset-x-0 bottom-0 h-1 bg-destructive/20 overflow-hidden">
+                                        <div
+                                            className="h-full bg-destructive transition-all duration-1000 ease-linear"
+                                            style={{ width: `${(countdown / 10) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 text-balance">
+                                <h1 className="text-3xl font-black tracking-tight text-foreground uppercase italic leading-none">
+                                    Server Is Down
+                                </h1>
+                                <p className="text-muted-foreground font-bold tracking-tight uppercase text-xs">
+                                    Please Contact Server Admin
+                                </p>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-muted/50 border border-border/40">
+                                <p className="text-sm font-black tracking-widest uppercase text-primary animate-pulse">
+                                    Auto refresh in {countdown}s
+                                </p>
+                            </div>
+
+                            <Button
+                                onClick={handleRefresh}
+                                size="lg"
+                                className="w-full rounded-2xl h-14 text-lg font-black tracking-tighter uppercase shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            >
+                                <RefreshCw className="mr-2 h-5 w-5" />
+                                Force Retry Now
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Premium Header Container */}
             <div className="relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
