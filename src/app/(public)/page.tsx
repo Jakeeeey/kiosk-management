@@ -397,7 +397,7 @@ export default function PublicKioskLoginPage() {
                             }
                         </div>
                         <CardTitle className="text-3xl font-black tracking-[-0.03em] text-center px-4 text-white uppercase italic animate-flicker">
-                            {loading ? "Verifying..." : "Neural Scan"}
+                            {loading ? "Verifying..." : "RFID Scan"}
                         </CardTitle>
                         <CardDescription className="text-center text-base font-bold px-10 text-blue-200/40 uppercase tracking-[0.2em] mt-1">
                             {loading
@@ -445,10 +445,10 @@ export default function PublicKioskLoginPage() {
 
                 <div className="flex justify-between items-center mt-10 px-4 animate-flicker">
                     <p className="text-[10px] font-black text-blue-500/30 uppercase tracking-[0.5em]">
-                        VOS-WEB Terminal // Core v2.0
+                        VOS-WEB Terminal // Core v1.0
                     </p>
                     <p className="text-[10px] font-black text-blue-500/30 uppercase tracking-[0.5em]">
-                        {new Date().getFullYear()} © Digital Nexus
+                        {new Date().getFullYear()} © Men2 Marketing
                     </p>
                 </div>
             </div>
