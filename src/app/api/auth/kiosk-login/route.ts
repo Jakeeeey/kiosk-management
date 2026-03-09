@@ -89,17 +89,22 @@ export async function POST(request: NextRequest) {
         // Generate a 365-day tracking token cookie
         const cookieStore = await cookies();
 
+        // Detect if we are on HTTP or HTTPS to handle the 'secure' flag correctly
+        const isProduction = process.env.NODE_ENV === "production";
+
         // Simple token format (can be a JWT in real-world scenarios)
         const tokenPayload = btoa(JSON.stringify({ userId: user.user_id, dept: user.user_department, timestamp: Date.now() }));
 
-        // Detect if we are on HTTP or HTTPS to handle the 'secure' flag correctly
-        // Next.js normally defaults to process.env.NODE_ENV === "production"
-        // But in local network deployments (like http://msi-4:3008), 'secure: true' will block cookies over HTTP.
-        const isProduction = process.env.NODE_ENV === "production";
+        const response = NextResponse.json({
+            success: true,
+            user: {
+                firstName: user.user_fname,
+                lastName: user.user_lname,
+            }
+        }, { status: 200 });
 
-        cookieStore.set("kiosk_token", tokenPayload, {
+        response.cookies.set("kiosk_token", tokenPayload, {
             httpOnly: true,
-            // If it's production but NOT using HTTPS, we must set secure to false or the cookie won't persist.
             secure: isProduction ? (request.nextUrl.protocol === "https:") : false,
             sameSite: "lax",
             maxAge: 60 * 60 * 24 * 365, // 365 days
@@ -108,13 +113,7 @@ export async function POST(request: NextRequest) {
 
         console.log(`[Auth] User ${user.user_id} (${user.user_fname}) logged in successfully.`);
 
-        return NextResponse.json({
-            success: true,
-            user: {
-                firstName: user.user_fname,
-                lastName: user.user_lname,
-            }
-        }, { status: 200 });
+        return response;
 
     } catch (err) {
         console.error("[Auth] Unexpected login error:", err);
