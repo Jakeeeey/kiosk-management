@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 const TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
@@ -85,9 +84,6 @@ export async function POST(request: NextRequest) {
                 { status: 403 }
             );
         }
-
-        // Generate a 365-day tracking token cookie
-        const cookieStore = await cookies();
 
         // Detect if we are on HTTP or HTTPS to handle the 'secure' flag correctly
         const isProduction = process.env.NODE_ENV === "production";
