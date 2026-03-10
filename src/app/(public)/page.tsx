@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScanLine, Activity, Loader2, ShieldCheck } from "lucide-react";
+import { ScanLine, Activity, Loader2 } from "lucide-react";
 
 export default function PublicKioskLoginPage() {
     const router = useRouter();
