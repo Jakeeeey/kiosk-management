@@ -27,6 +27,7 @@ interface DirectusPlan {
     estimated_time_of_dispatch?: string;
     estimated_time_of_arrival?: string;
     vehicle_id: number;
+    driver_id: number;
     status: string;
 }
 
@@ -89,22 +90,32 @@ export async function GET(req: NextRequest) {
             const planStatus = (p.status || "").trim().toLowerCase();
             const isInbound = planStatus === "for inbound";
 
-            // Get all staff records for this plan
-            let staffRecords = planStaffMap.get(p.id) || [];
+            // Get all staff records for this plan (using Number for safety)
+            let staffRecords = planStaffMap.get(Number(p.id)) || [];
 
-            // For Inbound, ONLY show staff who are physically present
+            // For Inbound, show staff who are physically present (with resilient truthy check)
             if (isInbound) {
-                staffRecords = staffRecords.filter((s: DirectusStaff) => s.is_present === 1 || s.is_present === true);
+                staffRecords = staffRecords.filter((s: DirectusStaff) => 
+                    s.is_present === 1 || 
+                    s.is_present === true || 
+                    String(s.is_present) === "1"
+                );
             }
 
             const vehicle = vehicleMap.get(p.vehicle_id);
             const formatUser = (user: DirectusUser | undefined | null) => user ? `${user.user_fname} ${user.user_lname}` : null;
 
             // Map staff records to user data
-            const driverRecord = staffRecords.find((s: DirectusStaff) => s.role === "Driver");
-            const helperRecords = staffRecords.filter((s: DirectusStaff) => s.role === "Helper");
+            // Use case-insensitive role check for safety
+            const driverRecord = staffRecords.find((s: DirectusStaff) => (s.role || "").toLowerCase() === "driver");
+            const helperRecords = staffRecords.filter((s: DirectusStaff) => (s.role || "").toLowerCase() === "helper");
 
             const driverUser = driverRecord ? userMap.get(driverRecord.user_id) : null;
+            
+            // Fallback for driver name from the plan table itself if no present staff found
+            const fallbackUser = userMap.get(p.driver_id);
+            const finalDriver = driverUser || fallbackUser;
+
             const helperUsers = helperRecords.map((h: DirectusStaff) => userMap.get(h.user_id)).filter((u): u is DirectusUser => !!u);
 
             return {
@@ -114,9 +125,9 @@ export async function GET(req: NextRequest) {
                 estimated_time_of_dispatch: p.estimated_time_of_dispatch,
                 estimated_time_of_arrival: p.estimated_time_of_arrival,
                 // Driver Details
-                driver_id: driverUser?.user_id || 0,
-                driver_name: formatUser(driverUser) || (isInbound ? "" : "Unknown Driver"),
-                driver_rfid: driverUser?.rf_id || null,
+                driver_id: finalDriver?.user_id || 0,
+                driver_name: formatUser(finalDriver) || (isInbound ? "No Present Driver" : "Unknown Driver"),
+                driver_rfid: finalDriver?.rf_id || null,
                 // Legacy Helper (for backwards/simple compatibility)
                 helper_name: formatUser(helperUsers[0]) || null,
                 helper_rfid: helperUsers[0]?.rf_id || null,

@@ -110,16 +110,23 @@ export function KioskList({ plans, loading, onSuccess }: KioskListProps) {
                                 </div>
 
                                 <div className={`grid grid-cols-2 gap-4 pt-2 border-t ${borderColor}`}>
-                                    {/* Driver Info Section */}
-                                    <div className="flex items-center gap-2">
-                                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center border transition-colors ${iconBgColor}`}>
+                                    {/* Driver & Helper Info Section */}
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center border transition-colors shrink-0 ${iconBgColor}`}>
                                             <User className={`h-4 w-4 ${iconColor}`} />
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className={`text-[10px] uppercase font-bold ${labelColor}`}>Driver</span>
-                                            <span className={`text-sm font-semibold truncate ${valueColor}`}>
-                                                {plan.driver_name}
-                                            </span>
+                                        <div className="flex flex-col min-w-0">
+                                            <div className="flex flex-col leading-tight">
+                                                <span className={`text-[10px] uppercase font-bold ${labelColor}`}>Personnel</span>
+                                                <span className={`text-sm font-semibold truncate ${valueColor}`}>
+                                                    {plan.driver_name}
+                                                </span>
+                                                {plan.helper_name && (
+                                                    <span className={`text-[11px] font-medium truncate opacity-70 ${valueColor}`}>
+                                                        {plan.helper_name} <span className="text-[9px] font-bold opacity-60">(Helper)</span>
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
