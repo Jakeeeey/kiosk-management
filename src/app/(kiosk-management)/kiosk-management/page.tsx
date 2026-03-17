@@ -88,7 +88,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         description: "Monitor asset notifications",
         icon: BellRing,
         bgClass: "bg-gradient-to-br from-rose-500 to-rose-700",
-        href: "#",
+        href: "/kiosk-management/asset-alert",
         badge: "Alerts",
     },
     {
