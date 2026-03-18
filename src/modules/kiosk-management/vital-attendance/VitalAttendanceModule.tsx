@@ -85,7 +85,7 @@ export function VitalAttendanceModule({ url, fallbackUrl }: VitalAttendanceModul
         <div className="flex flex-col h-screen max-h-[calc(100vh-2rem)] space-y-2 animate-in fade-in duration-700">
             {/* Server Down Modal */}
             {isServerDown && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-8 animate-in zoom-in-95 duration-300">
+                <div id="server-down-overlay" className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-8 animate-in zoom-in-95 duration-300">
                     <div className="max-w-md w-full p-8 rounded-[2.5rem] bg-card border border-destructive/20 shadow-[0_0_50px_-12px_rgba(220,38,38,0.3)] text-center space-y-8 relative overflow-hidden group">
                         {/* Background Pulse */}
                         <div className="absolute inset-0 bg-destructive/5 animate-pulse" />
