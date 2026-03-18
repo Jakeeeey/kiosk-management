@@ -15,16 +15,19 @@ export function IdleTimeoutHandler() {
 
         // Only start timer if we are NOT on the main kiosk page
         if (pathname !== "/kiosk-management") {
-            timeoutRef.current = setTimeout(() => {
-                // DON'T redirect if server-down overlay is visible
-                const isServerDown = document.getElementById("server-down-overlay");
-                if (isServerDown) {
-                    // Try again in 5 seconds instead of redirecting
-                    resetTimeout(); 
-                } else {
-                    router.push("/kiosk-management");
-                }
-            }, 15000); // 15 seconds (User updated this)
+            const scheduleNext = (delay: number) => {
+                timeoutRef.current = setTimeout(() => {
+                    const isServerDown = document.getElementById("server-down-overlay");
+                    if (isServerDown) {
+                        // Try again in 5 seconds instead of redirecting
+                        scheduleNext(5000);
+                    } else {
+                        router.push("/kiosk-management");
+                    }
+                }, delay);
+            };
+
+            scheduleNext(15000); // Start with 15 seconds
         }
     }, [pathname, router]);
 

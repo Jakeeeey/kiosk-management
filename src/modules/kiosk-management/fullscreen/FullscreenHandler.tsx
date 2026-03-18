@@ -1,32 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+
+interface NavigatorWithKeyboard extends Navigator {
+    keyboard?: {
+        lock: (keyCodes?: string[]) => Promise<void>;
+        unlock: () => void;
+    };
+}
 
 export function FullscreenHandler() {
-    const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+    const pressedKeysRef = useRef<Set<string>>(new Set());
     const [showAlert, setShowAlert] = useState(false);
-    const [alertTimeout, setAlertTimeout] = useState<NodeJS.Timeout | null>(null);
+    const alertTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const triggerAlert = () => {
+    const triggerAlert = useCallback(() => {
         setShowAlert(true);
-        if (alertTimeout) clearTimeout(alertTimeout);
-        const timeout = setTimeout(() => setShowAlert(false), 3000);
-        setAlertTimeout(timeout);
-    };
+        if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+        alertTimeoutRef.current = setTimeout(() => setShowAlert(false), 3000);
+    }, []);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
+            const nav = navigator as NavigatorWithKeyboard;
             if (document.fullscreenElement) {
                 // Call lock() without arguments to capture ALL keys (including Ctrl+N, Ctrl+T, Alt+Tab etc.)
                 // This is only supported in Chromium-based browsers (Chrome/Edge/Opera)
-                if ("keyboard" in navigator && (navigator as any).keyboard?.lock) {
-                    (navigator as any).keyboard.lock().catch((err: any) => {
+                if (nav.keyboard?.lock) {
+                    nav.keyboard.lock().catch((err: Error) => {
                         console.warn("Keyboard lock failed:", err);
                     });
                 }
             } else {
-                if ("keyboard" in navigator && (navigator as any).keyboard?.unlock) {
-                    (navigator as any).keyboard.unlock();
+                if (nav.keyboard?.unlock) {
+                    nav.keyboard.unlock();
                 }
             }
         };
@@ -34,15 +41,14 @@ export function FullscreenHandler() {
         document.addEventListener("fullscreenchange", handleFullscreenChange);
         return () => {
             document.removeEventListener("fullscreenchange", handleFullscreenChange);
-            if (alertTimeout) clearTimeout(alertTimeout);
+            if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
         };
-    }, [alertTimeout]);
+    }, []);
 
     useEffect(() => {
         const blockKeys = (e: KeyboardEvent) => {
             const key = e.key.toLowerCase();
             const ctrl = e.ctrlKey || e.metaKey;
-            const shift = e.shiftKey;
             const alt = e.altKey;
 
             // Block common browser system keys
@@ -94,11 +100,26 @@ export function FullscreenHandler() {
             
             // Track A, S, D keys
             if (key === "a" || key === "s" || key === "d") {
-                setPressedKeys((prev) => {
-                    const next = new Set(prev);
-                    next.add(key);
-                    return next;
-                });
+                pressedKeysRef.current.add(key);
+
+                // Toggle fullscreen when A, S, and D are all pressed
+                if (
+                    pressedKeysRef.current.has("a") && 
+                    pressedKeysRef.current.has("s") && 
+                    pressedKeysRef.current.has("d")
+                ) {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch((err) => {
+                            console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                        });
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        }
+                    }
+                    // Clear keys to prevent rapid toggling
+                    pressedKeysRef.current.clear();
+                }
             }
         };
 
@@ -107,11 +128,7 @@ export function FullscreenHandler() {
 
             const key = e.key.toLowerCase();
             if (key === "a" || key === "s" || key === "d") {
-                setPressedKeys((prev) => {
-                    const next = new Set(prev);
-                    next.delete(key);
-                    return next;
-                });
+                pressedKeysRef.current.delete(key);
             }
         };
 
@@ -128,24 +145,7 @@ export function FullscreenHandler() {
             window.removeEventListener("keypress", blockKeys, true);
             document.removeEventListener("keydown", blockKeys, true);
         };
-    }, [alertTimeout]); // Need alertTimeout in deps to call triggerAlert correctly if it uses closure
-
-    useEffect(() => {
-        // Toggle fullscreen when A, S, and D are all pressed
-        if (pressedKeys.has("a") && pressedKeys.has("s") && pressedKeys.has("d")) {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch((err) => {
-                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-            // Clear keys to prevent rapid toggling
-            setPressedKeys(new Set());
-        }
-    }, [pressedKeys]);
+    }, [triggerAlert]);
 
     return (
         <>
