@@ -1,5 +1,5 @@
-import { FullscreenHandler } from "@/components/FullscreenHandler";
-import { IdleTimeoutHandler } from "@/components/IdleTimeoutHandler";
+import { FullscreenHandler } from "@/modules/kiosk-management/fullscreen/FullscreenHandler";
+import { IdleTimeoutHandler } from "@/modules/kiosk-management/fullscreen/IdleTimeoutHandler";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
     return (
