@@ -35,10 +35,16 @@ export function IdleTimeoutHandler() {
         const events = [
             "mousedown",
             "mousemove",
-            "keypress",
+            "keydown",
+            "wheel",
             "scroll",
             "touchstart",
-            "click"
+            "touchmove",
+            "click",
+            "input",
+            "change",
+            "focusin",
+            "submit"
         ];
 
         const handleActivity = () => {
