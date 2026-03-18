@@ -134,14 +134,6 @@ export function VitalAttendanceModule({ url, fallbackUrl }: VitalAttendanceModul
             {/* Header Section */}
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl border border-border/40 bg-background/50 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-muted transition-all"
-                        onClick={handleBack}
-                    >
-                        <ArrowLeft className="h-5 w-5 text-foreground" />
-                    </Button>
                     <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
                             <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -192,6 +184,16 @@ export function VitalAttendanceModule({ url, fallbackUrl }: VitalAttendanceModul
                     title="Vital Attendance System"
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                 />
+            </div>
+            {/* Fixed Floating Back Button */}
+            <div className="fixed bottom-10 right-10 z-[60]">
+                <Button
+                    onClick={handleBack}
+                    className="h-24 w-24 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all bg-primary hover:bg-primary/90 text-primary-foreground flex flex-col items-center justify-center gap-0 group border-4 border-background"
+                >
+                    <ArrowLeft className="h-10 w-10 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
+                    <span className="text-[10px] font-black tracking-widest uppercase mt-[-2px]">Back</span>
+                </Button>
             </div>
         </div>
     );
