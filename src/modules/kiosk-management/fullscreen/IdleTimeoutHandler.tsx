@@ -3,39 +3,34 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+/**
+ * Optimized IdleTimeoutHandler
+ * Uses a timestamp-based approach to avoid race conditions with standard setTimeout.
+ */
 export function IdleTimeoutHandler() {
     const router = useRouter();
     const pathname = usePathname();
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastActivityRef = useRef<number>(Date.now());
 
-    const resetTimeout = useCallback(() => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
+    // Set to 30 seconds (30,000ms)
+    const IDLE_THRESHOLD = 5000;
 
-        // Only start timer if we are NOT on the main kiosk page
-        if (pathname !== "/kiosk-management") {
-            const scheduleNext = (delay: number) => {
-                timeoutRef.current = setTimeout(() => {
-                    const isServerDown = document.getElementById("server-down-overlay");
-                    if (isServerDown) {
-                        // Try again in 5 seconds instead of redirecting
-                        scheduleNext(5000);
-                    } else {
-                        router.push("/kiosk-management");
-                    }
-                }, delay);
-            };
-
-            scheduleNext(15000); // Start with 15 seconds
-        }
-    }, [pathname, router]);
+    const resetActivity = useCallback(() => {
+        lastActivityRef.current = Date.now();
+    }, []);
 
     useEffect(() => {
+        // Reset activity baseline whenever the route changes
+        resetActivity();
+
+        // No idle timeout on the main kiosk hub
+        if (pathname === "/kiosk-management") return;
+
         const events = [
             "mousedown",
             "mousemove",
             "keydown",
+            "keyup",
             "wheel",
             "scroll",
             "touchstart",
@@ -43,32 +38,60 @@ export function IdleTimeoutHandler() {
             "click",
             "input",
             "change",
-            "focusin",
             "submit"
         ];
 
         const handleActivity = () => {
-            resetTimeout();
+            resetActivity();
         };
 
-        // Initialize timeout
-        resetTimeout();
-
-        // Add listeners
+        // Use Capture phase for robust event detection
         events.forEach((event) => {
-            window.addEventListener(event, handleActivity);
+            window.addEventListener(event, handleActivity, { capture: true, passive: true });
         });
 
-        return () => {
-            // Clean up
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
+        // Check idle state every second
+        const checkerInterval = setInterval(() => {
+            const now = Date.now();
+
+            // PAUSE LOGIC: 
+            // 1. Check if the user is typing (focused on an input)
+            const activeElement = document.activeElement;
+            const isInputFocused =
+                activeElement?.tagName === "INPUT" ||
+                activeElement?.tagName === "TEXTAREA" ||
+                activeElement?.getAttribute("contenteditable") === "true";
+
+            // 2. Check if the application is "processing" (active spinners)
+            const isProcessing = document.querySelector(".animate-spin") !== null;
+
+            if (isInputFocused || isProcessing) {
+                resetActivity();
+                return;
             }
+
+            const timeSinceLastActivity = now - lastActivityRef.current;
+
+            if (timeSinceLastActivity >= IDLE_THRESHOLD) {
+                // Check if a server-down overlay is blocking the app
+                const isServerDown = document.getElementById("server-down-overlay");
+
+                if (isServerDown) {
+                    // Reset activity if server is down (wait another interval)
+                    resetActivity();
+                } else {
+                    router.push("/kiosk-management");
+                }
+            }
+        }, 1000);
+
+        return () => {
+            clearInterval(checkerInterval);
             events.forEach((event) => {
-                window.removeEventListener(event, handleActivity);
+                window.removeEventListener(event, handleActivity, { capture: true });
             });
         };
-    }, [resetTimeout]);
+    }, [pathname, router, resetActivity]);
 
     return null;
 }
