@@ -10,10 +10,10 @@ import { useRouter, usePathname } from "next/navigation";
 export function IdleTimeoutHandler() {
     const router = useRouter();
     const pathname = usePathname();
-    const lastActivityRef = useRef<number>(Date.now());
+    const lastActivityRef = useRef<number>(0);
 
-    // Set to 30 seconds (30,000ms)
-    const IDLE_THRESHOLD = 5000;
+    // Set to 2 minutes (120,000ms)
+    const IDLE_THRESHOLD = 120000;
 
     const resetActivity = useCallback(() => {
         lastActivityRef.current = Date.now();
