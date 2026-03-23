@@ -51,10 +51,19 @@ export function RFIDScanner({
         inputRef.current?.focus();
     }, []);
 
-    // Keep input always focused
+    // Keep input always focused (but not when user is interacting with other UI elements)
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (document.activeElement !== inputRef.current) {
+            // Don't steal focus if user is interacting with popovers, dialogs, or buttons
+            const activeElement = document.activeElement;
+            const isInPopover = activeElement?.closest('[data-slot="popover-content"]');
+            const isInDialog = activeElement?.closest('[role="dialog"]');
+            const isButton = activeElement?.tagName === 'BUTTON';
+            const isInput = activeElement?.tagName === 'INPUT';
+            const isInCalendar = activeElement?.closest('[data-slot="calendar"]');
+
+            // Only refocus if not interacting with UI elements
+            if (!isInPopover && !isInDialog && !isButton && !isInCalendar && !isInput && document.activeElement !== inputRef.current) {
                 inputRef.current?.focus();
             }
         }, 100);
@@ -62,11 +71,19 @@ export function RFIDScanner({
         return () => clearInterval(interval);
     }, []);
 
-    // Re-focus after modal closes
+    // Re-focus after modal closes (but not if user is interacting with other elements)
     React.useEffect(() => {
         if (!showAlertModal) {
             setTimeout(() => {
-                inputRef.current?.focus();
+                const activeElement = document.activeElement;
+                const isInPopover = activeElement?.closest('[data-slot="popover-content"]');
+                const isInDialog = activeElement?.closest('[role="dialog"]');
+                const isInput = activeElement?.tagName === 'INPUT';
+                const isInCalendar = activeElement?.closest('[data-slot="calendar"]');
+
+                if (!isInPopover && !isInDialog && !isInput && !isInCalendar) {
+                    inputRef.current?.focus();
+                }
             }, 100);
         }
     }, [showAlertModal]);
@@ -191,9 +208,17 @@ export function RFIDScanner({
         } finally {
             setIsScanning(false);
             setRfidCode("");
-            // Re-focus input for next scan
+            // Re-focus input for next scan (but not if user is interacting with other elements)
             setTimeout(() => {
-                inputRef.current?.focus();
+                const activeElement = document.activeElement;
+                const isInPopover = activeElement?.closest('[data-slot="popover-content"]');
+                const isInDialog = activeElement?.closest('[role="dialog"]');
+                const isInput = activeElement?.tagName === 'INPUT';
+                const isInCalendar = activeElement?.closest('[data-slot="calendar"]');
+
+                if (!isInPopover && !isInDialog && !isInput && !isInCalendar) {
+                    inputRef.current?.focus();
+                }
             }, 100);
         }
     };
@@ -231,10 +256,19 @@ export function RFIDScanner({
                             value={rfidCode}
                             onChange={(e) => setRfidCode(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            onBlur={() => {
-                                // Immediately refocus if input loses focus
+                            onBlur={(e) => {
+                                // Only refocus if not clicking on UI elements
                                 setTimeout(() => {
-                                    inputRef.current?.focus();
+                                    const activeElement = document.activeElement;
+                                    const isInPopover = activeElement?.closest('[data-slot="popover-content"]');
+                                    const isInDialog = activeElement?.closest('[role="dialog"]');
+                                    const isButton = activeElement?.tagName === 'BUTTON';
+                                    const isInput = activeElement?.tagName === 'INPUT';
+                                    const isInCalendar = activeElement?.closest('[data-slot="calendar"]');
+
+                                    if (!isInPopover && !isInDialog && !isButton && !isInput && !isInCalendar) {
+                                        inputRef.current?.focus();
+                                    }
                                 }, 10);
                             }}
                             placeholder="Scan RFID code..."

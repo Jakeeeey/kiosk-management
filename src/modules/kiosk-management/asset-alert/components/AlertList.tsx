@@ -32,22 +32,33 @@ import {
     PaginationEllipsis,
     PaginationItem,
 } from "@/components/ui/pagination";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-    AlertTriangle, 
-    RefreshCw, 
-    Clock, 
-    CheckCircle2, 
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    AlertTriangle,
+    RefreshCw,
+    Clock,
+    CheckCircle2,
     XCircle,
     FileSearch,
     Loader2,
-    Trash2
+    Trash2,
+    Search,
+    CalendarIcon,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import type { AssetPerimeterAlertWithDetails, AlertStatus } from "../type";
 import { fetchAlerts, deleteAlert } from "../providers/fetchProvider";
+import { format } from "date-fns";
 
 interface AlertListProps {
     refreshTrigger?: number;
@@ -55,6 +66,9 @@ interface AlertListProps {
 
 export function AlertList({ refreshTrigger = 0 }: AlertListProps) {
     const [statusFilter, setStatusFilter] = React.useState<string>("all");
+    const [searchTerm, setSearchTerm] = React.useState<string>("");
+    const [fromDate, setFromDate] = React.useState<Date | undefined>(undefined);
+    const [toDate, setToDate] = React.useState<Date | undefined>(undefined);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [alertToDelete, setAlertToDelete] = React.useState<number | null>(null);
     const [isMounted, setIsMounted] = React.useState(false);
@@ -88,11 +102,52 @@ export function AlertList({ refreshTrigger = 0 }: AlertListProps) {
         void loadAlerts();
     }, [loadAlerts, refreshTrigger]);
 
+    // Filter alerts based on search term and date range
+    const filteredAlerts = React.useMemo(() => {
+        return alerts.filter((alert) => {
+            // Search filter
+            if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch =
+                    alert.asset_details?.item_name?.toLowerCase().includes(searchLower) ||
+                    alert.asset_id.toString().includes(searchLower) ||
+                    alert.asset_details?.serial?.toLowerCase().includes(searchLower) ||
+                    alert.asset_details?.barcode?.toLowerCase().includes(searchLower) ||
+                    alert.accountable_user_name?.toLowerCase().includes(searchLower) ||
+                    alert.scanner_location_name?.toLowerCase().includes(searchLower) ||
+                    alert.scanner_gate_id?.toLowerCase().includes(searchLower);
+
+                if (!matchesSearch) return false;
+            }
+
+            // Date range filter
+            if (fromDate || toDate) {
+                const alertDate = new Date(alert.scanned_at);
+                // Set time to start of day for comparison
+                alertDate.setHours(0, 0, 0, 0);
+
+                if (fromDate) {
+                    const from = new Date(fromDate);
+                    from.setHours(0, 0, 0, 0);
+                    if (alertDate < from) return false;
+                }
+
+                if (toDate) {
+                    const to = new Date(toDate);
+                    to.setHours(23, 59, 59, 999);
+                    if (alertDate > to) return false;
+                }
+            }
+
+            return true;
+        });
+    }, [alerts, searchTerm, fromDate, toDate]);
+
     // Calculate pagination
-    const totalPages = Math.ceil(alerts.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredAlerts.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentAlerts = alerts.slice(startIndex, endIndex);
+    const currentAlerts = filteredAlerts.slice(startIndex, endIndex);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -165,53 +220,180 @@ export function AlertList({ refreshTrigger = 0 }: AlertListProps) {
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Alerts Warning</h2>
                         <p className="text-sm text-muted-foreground">
-                            {alerts.length} {alerts.length === 1 ? "alert" : "alerts"} found
+                            {filteredAlerts.length} {filteredAlerts.length === 1 ? "alert" : "alerts"} found
+                            {filteredAlerts.length !== alerts.length && (
+                                <span> (filtered from {alerts.length} total)</span>
+                            )}
                         </p>
                     </div>
                 </div>
+            </div>
 
-                <div className="flex items-center gap-2">
-                    {isMounted ? (
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-45">
-                                <SelectValue placeholder="Filter by status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
-                                <SelectItem value="New">New</SelectItem>
-                                <SelectItem value="Under Investigation">Under Investigation</SelectItem>
-                                <SelectItem value="Resolved">Resolved</SelectItem>
-                                <SelectItem value="Closed">False Alarm</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    ) : (
-                        <div className="w-45 h-10 border rounded-md bg-background" />
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[300px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by asset name, ID, serial, barcode..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1); // Reset to first page when searching
+                        }}
+                        className="pl-9"
+                    />
+                    {searchTerm && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                            onClick={() => setSearchTerm("")}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
                     )}
-
-                    <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => void loadAlerts()}
-                        disabled={loading}
-                    >
-                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                    </Button>
                 </div>
+
+                {/* From Date */}
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className={`justify-start text-left font-normal ${!fromDate && "text-muted-foreground"}`}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fromDate ? format(fromDate, "PPP") : "From date"}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={fromDate}
+                            onSelect={(date) => {
+                                setFromDate(date);
+                                setCurrentPage(1);
+                            }}
+                            initialFocus
+                        />
+                        {fromDate && (
+                            <div className="p-3 border-t">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => setFromDate(undefined)}
+                                >
+                                    Clear
+                                </Button>
+                            </div>
+                        )}
+                    </PopoverContent>
+                </Popover>
+
+                {/* To Date */}
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            className={`justify-start text-left font-normal ${!toDate && "text-muted-foreground"}`}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {toDate ? format(toDate, "PPP") : "To date"}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={toDate}
+                            onSelect={(date) => {
+                                setToDate(date);
+                                setCurrentPage(1);
+                            }}
+                            initialFocus
+                        />
+                        {toDate && (
+                            <div className="p-3 border-t">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => setToDate(undefined)}
+                                >
+                                    Clear
+                                </Button>
+                            </div>
+                        )}
+                    </PopoverContent>
+                </Popover>
+
+                {/* Status Filter */}
+                {isMounted ? (
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-45">
+                            <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="New">New</SelectItem>
+                            <SelectItem value="Under Investigation">Under Investigation</SelectItem>
+                            <SelectItem value="Resolved">Resolved</SelectItem>
+                            <SelectItem value="Closed">False Alarm</SelectItem>
+                        </SelectContent>
+                    </Select>
+                ) : (
+                    <div className="w-45 h-10 border rounded-md bg-background" />
+                )}
+
+                {/* Refresh Button */}
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => void loadAlerts()}
+                    disabled={loading}
+                >
+                    <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                </Button>
+
+                {/* Clear All Filters */}
+                {(searchTerm || fromDate || toDate || statusFilter !== "all") && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setSearchTerm("");
+                            setFromDate(undefined);
+                            setToDate(undefined);
+                            setStatusFilter("all");
+                            setCurrentPage(1);
+                        }}
+                    >
+                        Clear all filters
+                    </Button>
+                )}
             </div>
 
             {loading ? (
                 <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-            ) : alerts.length === 0 ? (
+            ) : filteredAlerts.length === 0 ? (
                 <div className="text-center py-12 space-y-3">
                     <div className="mx-auto h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
-                        <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+                        {searchTerm || fromDate || toDate || statusFilter !== "all" ? (
+                            <FileSearch className="h-8 w-8 text-muted-foreground" />
+                        ) : (
+                            <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+                        )}
                     </div>
                     <div>
-                        <h3 className="font-semibold text-lg">No Alerts</h3>
+                        <h3 className="font-semibold text-lg">
+                            {searchTerm || fromDate || toDate || statusFilter !== "all" ? "No Matching Alerts" : "No Alerts"}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                            {statusFilter === "all" 
+                            {searchTerm || fromDate || toDate || statusFilter !== "all"
+                                ? "No alerts match your search criteria. Try adjusting your filters."
+                                : statusFilter === "all"
                                 ? "All assets are secure. No alerts recorded."
                                 : `No alerts with status "${statusFilter}".`
                             }
