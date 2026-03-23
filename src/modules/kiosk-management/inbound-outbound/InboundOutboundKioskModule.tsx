@@ -68,7 +68,7 @@ export function InboundOutboundKioskModule() {
         <div className="max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 pb-20 px-4 md:px-8 lg:px-12">
             {/* Server Down Modal */}
             {isServerDown && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-8 animate-in zoom-in-95 duration-300">
+                <div id="server-down-overlay" className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-8 animate-in zoom-in-95 duration-300">
                     <div className="max-w-md w-full p-8 rounded-[2.5rem] bg-card border border-destructive/20 shadow-[0_0_50px_-12px_rgba(220,38,38,0.3)] text-center space-y-8 relative overflow-hidden group">
                         {/* Background Pulse */}
                         <div className="absolute inset-0 bg-destructive/5 animate-pulse" />
@@ -118,14 +118,6 @@ export function InboundOutboundKioskModule() {
             <div className="relative">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-12 w-12 rounded-2xl border-border/60 shadow-sm hover:shadow-md hover:bg-muted transition-all"
-                            onClick={handleBack}
-                        >
-                            <ArrowLeft className="h-6 w-6 text-foreground" />
-                        </Button>
                         <div className="space-y-1">
                             <div className="flex items-center gap-3">
                                 {loading && <RefreshCcw className="h-4 w-4 animate-spin text-muted-foreground/60" />}
@@ -162,6 +154,16 @@ export function InboundOutboundKioskModule() {
                 <div className="min-h-[500px]">
                     <KioskList plans={filteredPlans} loading={loading} onSuccess={reload} />
                 </div>
+            </div>
+            {/* Fixed Floating Back Button */}
+            <div className="fixed bottom-10 right-10 z-[60]">
+                <Button
+                    onClick={handleBack}
+                    className="h-24 w-24 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all bg-primary hover:bg-primary/90 text-primary-foreground flex flex-col items-center justify-center gap-0 group border-4 border-background"
+                >
+                    <ArrowLeft className="h-10 w-10 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
+                    <span className="text-[10px] font-black tracking-widest uppercase mt-[-2px]">Back</span>
+                </Button>
             </div>
         </div >
     );

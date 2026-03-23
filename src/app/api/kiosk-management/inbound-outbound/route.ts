@@ -332,7 +332,31 @@ export async function PATCH(req: NextRequest) {
                             const errorText = await batchRes.text();
                             console.error(`[KIOSK_PATCH] Batch update failed: ${batchRes.status}`, errorText);
                         } else {
-                            console.log(`[KIOSK_PATCH] Batch update successful.`);
+                            console.log(`[KIOSK_PATCH] Batch update successful. (SO)`);
+                        }
+
+                        // Batch update sales invoices with dispatch details
+                        const siBatchRes = await fetch(`${DIRECTUS_URL}/items/sales_invoice`, {
+                            method: "PATCH",
+                            headers: {
+                                "Authorization": `Bearer ${AUTH_TOKEN}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                query: { filter: { "invoice_id": { "_in": invoiceIds } } },
+                                data: { 
+                                    dispatch_date: time_of_dispatch || new Date().toISOString(),
+                                    transaction_status: "En Route",
+                                    isDispatched: 1
+                                }
+                            })
+                        });
+
+                        if (!siBatchRes.ok) {
+                            const errorText = await siBatchRes.text();
+                            console.error(`[KIOSK_PATCH] SI Batch update failed: ${siBatchRes.status}`, errorText);
+                        } else {
+                            console.log(`[KIOSK_PATCH] SI Batch update successful.`);
                         }
                     }
                 }
