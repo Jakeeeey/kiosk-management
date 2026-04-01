@@ -1,22 +1,27 @@
 "use client";
 
+// Extend Window interface for webkit audio context support
+declare global {
+    interface Window {
+        webkitAudioContext: typeof AudioContext;
+    }
+}
+
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogContent,
     AlertDialogDescription,
-    AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogMedia,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScanLine, AlertTriangle, XCircle, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import type { RFIDScanResponse, AssetPerimeterAlertWithDetails } from "../type";
+import type { AssetPerimeterAlertWithDetails } from "../type";
 import { scanRFID } from "../providers/fetchProvider";
 
 interface RFIDScannerProps {
@@ -108,7 +113,7 @@ export function RFIDScanner({
         try {
             // Create audio context if it doesn't exist
             if (!audioContextRef.current) {
-                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
             }
             
             const audioContext = audioContextRef.current;
@@ -256,7 +261,7 @@ export function RFIDScanner({
                             value={rfidCode}
                             onChange={(e) => setRfidCode(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            onBlur={(e) => {
+                            onBlur={() => {
                                 // Only refocus if not clicking on UI elements
                                 setTimeout(() => {
                                     const activeElement = document.activeElement;

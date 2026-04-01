@@ -16,12 +16,7 @@ interface AssetAndEquipment {
     item_id: number | null;
 }
 
-interface Item {
-    id: number;
-    item_name: string;
-    item_type: number | null;
-    item_classification: number | null;
-}
+
 
 /**
  * POST /api/kiosk-management/asset-alert
@@ -119,7 +114,7 @@ export async function POST(request: NextRequest) {
         console.log("[Asset Alert POST] is_active_warning:", asset.is_active_warning, "(must be 1)");
         
         if (asset.is_active !== 1 || asset.is_active_warning !== 1) {
-            const reasons = [];
+            // const reasons = [];
             // if (asset.is_active !== 1) reasons.push("asset is not active");
             // if (asset.is_active_warning !== 1) reasons.push("warning is not enabled");
             
@@ -430,8 +425,8 @@ export async function GET(request: NextRequest) {
 
                     const asset = assetData.data?.[0];
                     let itemName = "Unknown Asset";
-                    let typeName = "";
-                    let classificationName = "";
+                    const typeName = "";
+                    const classificationName = "";
 
                     // Fetch item details if item_id exists
                     if (asset?.item_id) {

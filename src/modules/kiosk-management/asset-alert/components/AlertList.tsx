@@ -50,13 +50,12 @@ import {
     XCircle,
     FileSearch,
     Loader2,
-    Trash2,
     Search,
     CalendarIcon,
     X
 } from "lucide-react";
 import { toast } from "sonner";
-import type { AssetPerimeterAlertWithDetails, AlertStatus } from "../type";
+import type { AssetPerimeterAlertWithDetails } from "../type";
 import { fetchAlerts, deleteAlert } from "../providers/fetchProvider";
 import { format } from "date-fns";
 
@@ -151,11 +150,6 @@ export function AlertList({ refreshTrigger = 0 }: AlertListProps) {
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
-    };
-
-    const handleDeleteClick = (alertId: number) => {
-        setAlertToDelete(alertId);
-        setDeleteDialogOpen(true);
     };
 
     const handleDeleteConfirm = async () => {
