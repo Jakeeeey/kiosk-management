@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Users, FileText, AlertCircle, CheckCircle2, Truck, User } from "lucide-react";
 
 import type { KioskDispatchPlan } from "../types";
@@ -81,7 +80,7 @@ export function ArrivalDetailsModal({
                 </DialogHeader>
 
                 {/* Body */}
-                <div className="flex-1 overflow-hidden bg-background">
+                <div className="flex-1 overflow-y-auto bg-background p-6 sm:p-8 custom-scrollbar" style={{ maxHeight: 'calc(90vh - 200px)' }}>
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-16 space-y-3">
                             <Loader2 className="h-9 w-9 animate-spin text-red-500" />
@@ -108,100 +107,100 @@ export function ArrivalDetailsModal({
                             </p>
                         </div>
                     ) : (
-                        <div className="p-6 sm:p-8">
-                            <div className="rounded-2xl border overflow-hidden bg-background">
-                                {/* Keep the header visible + avoid the huge white middle */}
-                                <ScrollArea className="max-h-[52vh]">
-                                    <table className="w-full text-left border-collapse">
-                                        <colgroup>
-                                            <col />
-                                            <col style={{ width: 140 }} />
-                                            <col style={{ width: 140 }} />
-                                            <col style={{ width: 140 }} />
-                                        </colgroup>
+                        <div className="space-y-6">
+                            <div className="rounded-2xl border bg-background overflow-hidden">
+                                <table className="w-full text-left border-collapse">
+                                    <colgroup>
+                                        <col />
+                                        <col style={{ width: 140 }} />
+                                        <col style={{ width: 140 }} />
+                                        <col style={{ width: 140 }} />
+                                    </colgroup>
 
-                                        <thead className="sticky top-0 z-10 bg-muted/30 border-b">
-                                            <tr>
-                                                <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                                                    Customer
-                                                </th>
-                                                <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-red-600 text-center">
-                                                    Not Delivered
-                                                </th>
-                                                <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600 text-center">
-                                                    Has Concern
-                                                </th>
-                                                <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-rose-600 text-center">
-                                                    Has Return
-                                                </th>
-                                            </tr>
-                                        </thead>
+                                    <thead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm border-b">
+                                        <tr>
+                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                                                Customer Information
+                                            </th>
+                                            <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-red-600 text-center">
+                                                Not Delivered
+                                            </th>
+                                            <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600 text-center">
+                                                Has Concern
+                                            </th>
+                                            <th className="px-3 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-rose-600 text-center">
+                                                Has Return
+                                            </th>
+                                        </tr>
+                                    </thead>
 
-                                        <tbody className="divide-y">
-                                            {customers.map((customer) => {
-                                                const code = customer.customer_code;
-                                                const selected = deliveryStatuses[code];
+                                    <tbody className="divide-y">
+                                        {customers.map((customer) => {
+                                            const code = customer.customer_code;
+                                            const selected = deliveryStatuses[code];
 
-                                                return (
-                                                    <tr key={code} className="hover:bg-muted/10 transition-colors">
-                                                        <td className="px-5 py-4">
-                                                            <div className="flex items-start gap-3 min-w-0">
-                                                                <div className="h-10 w-10 mt-0.5 rounded-xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
-                                                                    <Users className="h-4 w-4 text-red-600" />
-                                                                </div>
-                                                                <div className="min-w-0 flex-1">
-                                                                    <div className="text-sm font-black text-foreground uppercase truncate">
-                                                                        {customer.customer_name}
-                                                                    </div>
-                                                                    <div className="text-[10px] font-bold text-muted-foreground/70 tracking-widest uppercase mb-1.5">
-                                                                        Code: {code}
-                                                                    </div>
-                                                                    {customer.invoices && customer.invoices.length > 0 && (
-                                                                        <ul className="mt-2 list-disc list-inside text-xs font-semibold text-muted-foreground/80 tracking-wide space-y-1">
-                                                                            {customer.invoices.map((inv, idx) => (
-                                                                                <li key={idx}>
-                                                                                    {inv.no} &mdash; <span className="font-bold text-foreground/80">₱{inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    )}
-                                                                </div>
+                                            return (
+                                                <tr key={code} className="hover:bg-muted/10 transition-colors">
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-start gap-3 min-w-0">
+                                                            <div className="h-10 w-10 mt-0.5 rounded-xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
+                                                                <Users className="h-4 w-4 text-red-600" />
                                                             </div>
-                                                        </td>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="text-sm font-black text-foreground uppercase truncate">
+                                                                    {customer.customer_name}
+                                                                </div>
+                                                                <div className="text-[10px] font-bold text-muted-foreground/70 tracking-widest uppercase mb-1.5">
+                                                                    Code: {code}
+                                                                </div>
+                                                                {customer.invoices && customer.invoices.length > 0 && (
+                                                                    <ul className="mt-2 list-disc list-inside text-xs font-semibold text-muted-foreground/80 tracking-wide space-y-1">
+                                                                        {customer.invoices.map((inv, idx) => (
+                                                                            <li key={idx}>
+                                                                                {inv.no} &mdash; <span className="font-bold text-foreground/80">₱{inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
 
-                                                        <td className="px-3 py-4 text-center align-middle">
-                                                            <Checkbox
-                                                                checked={selected === "not_delivered"}
-                                                                onCheckedChange={() => handleStatusChange(code, "not_delivered")}
-                                                                className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
-                                                            />
-                                                        </td>
+                                                    <td className="px-3 py-4 text-center align-middle">
+                                                        <Checkbox
+                                                            checked={selected === "not_delivered"}
+                                                            onCheckedChange={() => handleStatusChange(code, "not_delivered")}
+                                                            className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
+                                                        />
+                                                    </td>
 
-                                                        <td className="px-3 py-4 text-center align-middle">
-                                                            <Checkbox
-                                                                checked={selected === "has_concern"}
-                                                                onCheckedChange={() => handleStatusChange(code, "has_concern")}
-                                                                className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
-                                                            />
-                                                        </td>
+                                                    <td className="px-3 py-4 text-center align-middle">
+                                                        <Checkbox
+                                                            checked={selected === "has_concern"}
+                                                            onCheckedChange={() => handleStatusChange(code, "has_concern")}
+                                                            className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
+                                                        />
+                                                    </td>
 
-                                                        <td className="px-3 py-4 text-center align-middle">
-                                                            <Checkbox
-                                                                checked={selected === "has_return"}
-                                                                onCheckedChange={() => handleStatusChange(code, "has_return")}
-                                                                className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </ScrollArea>
+                                                    <td className="px-3 py-4 text-center align-middle">
+                                                        <Checkbox
+                                                            checked={selected === "has_return"}
+                                                            onCheckedChange={() => handleStatusChange(code, "has_return")}
+                                                            className="h-8 w-8 rounded-xl border-2 border-muted-foreground/30 data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500 data-[state=checked]:text-white [&_svg]:h-5 [&_svg]:w-5 shadow-sm transition-all"
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
 
                             {/* REMARKS FIELD */}
-                            <div className="mt-5">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-1">
+                                    Additional Remarks
+                                </label>
                                 <Input
                                     placeholder="Add any additional remarks here..."
                                     className="rounded-xl border-muted-foreground/30 focus-visible:ring-red-500 h-11 bg-muted/10 shadow-sm"
