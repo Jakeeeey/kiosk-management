@@ -29,6 +29,7 @@ import {
     Loader2,
     CirclePower,
     type LucideIcon,
+    DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
@@ -130,6 +131,14 @@ const KIOSK_FEATURES: KioskFeature[] = [
         bgClass: "bg-gradient-to-br from-cyan-500 to-cyan-700",
         href: "/kiosk-management/production-attendance",
         badge: "Operations",
+    },
+    {
+        title: "RSM Attendance",
+        description: "RSM site attendance",
+        icon: DollarSign,
+        bgClass: "bg-gradient-to-br from-purple-500 to-pink-700",
+        href: "/kiosk-management/rsm-attendance",
+        badge: "HR",
     },
     {
         title: "Vital Attendance",
