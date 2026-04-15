@@ -30,7 +30,7 @@ export function DispatchModal({ plan, open, onOpenChange, onSuccess }: DispatchM
 
     // Identity states
     const [isLookingUp, setIsLookingUp] = React.useState(false);
-    const [subUser, setSubUser] = React.useState<{ user_id: number; name: string; rfid: string } | null>(null);
+    const [subUser, setSubUser] = React.useState<{ user_id: number; name: string; rfid: string; position: string } | null>(null);
     const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
     const [showSummaryModal, setShowSummaryModal] = React.useState(false);
     const [showArrivalSummaryModal, setShowArrivalSummaryModal] = React.useState(false);
@@ -94,6 +94,17 @@ export function DispatchModal({ plan, open, onOpenChange, onSuccess }: DispatchM
 
             if (response.ok) {
                 const data = await response.json();
+                
+                // Validate user position
+                const position = (data.position || "").trim().toLowerCase();
+                if (position !== "driver" && position !== "helper") {
+                    toast.error("Unauthorized Position", {
+                        description: `Access denied for ${data.name} (${data.position || "Staff"}). Only Drivers and Helpers are allowed to tap.`
+                    });
+                    setRfid("");
+                    return;
+                }
+
                 setSubUser(data);
                 setIsRoleModalOpen(true);
             } else if (response.status === 404) {
