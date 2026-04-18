@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
                     _eq: rfid
                 }
             }),
-            fields: "user_id,user_fname,user_lname,rf_id",
+            fields: "user_id,user_fname,user_lname,rf_id,user_position",
             limit: "1"
         });
 
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             user_id: user.user_id,
             name: `${user.user_fname} ${user.user_lname}`,
-            rfid: user.rf_id
+            rfid: user.rf_id,
+            position: user.user_position
         });
 
     } catch (error: unknown) {

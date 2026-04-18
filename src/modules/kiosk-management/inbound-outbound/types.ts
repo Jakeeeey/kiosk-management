@@ -45,4 +45,5 @@ export interface DirectusUser {
     user_lname: string;
     user_mname?: string;
     rf_id?: string;
+    user_position?: string;
 }
