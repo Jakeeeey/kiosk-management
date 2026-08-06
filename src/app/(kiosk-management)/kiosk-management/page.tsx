@@ -20,10 +20,8 @@ import {
     BellRing,
     Users,
     Building2,
-    History,
     UtensilsCrossed,
     Factory,
-    Building,
     Activity,
     ScanLine,
     Loader2,
@@ -108,6 +106,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         href: "/kiosk-management/vertex-attendance",
         badge: "HR",
     },
+    /*
     {
         title: "Hanvin Attendance",
         description: "Hanvin site attendance",
@@ -116,6 +115,7 @@ const KIOSK_FEATURES: KioskFeature[] = [
         href: "/kiosk-management/hanvin-attendance",
         badge: "HR",
     },
+    */
     {
         title: "Cafeteria",
         description: "Meal & cafeteria access",
@@ -140,12 +140,22 @@ const KIOSK_FEATURES: KioskFeature[] = [
         href: "/kiosk-management/rsm-attendance",
         badge: "HR",
     },
+    /*
     {
         title: "Vital Attendance",
         description: "Vital site attendance",
         icon: Building,
         bgClass: "bg-gradient-to-br from-pink-500 to-pink-700",
         href: "/kiosk-management/vital-attendance",
+        badge: "HR",
+    },
+    */
+    {
+        title: "Menza Attendance",
+        description: "Menza site attendance",
+        icon: Building2,
+        bgClass: "bg-gradient-to-br from-teal-500 to-teal-700",
+        href: "/kiosk-management/menza-attendance",
         badge: "HR",
     },
 ];
